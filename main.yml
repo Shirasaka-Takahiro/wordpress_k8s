@@ -13,16 +13,16 @@ spec:
         app: wordpress
     spec:
       containers:
-      - name: apache
-        image: k8s/apache
+      - name: wordpress
+        image: k8s/wordpress
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
-      - name: php-fpm
-        image: k8s/php-fpm
+      - name: phpmyadmin
+        image: k8s/phpmyadmin
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 9000
+        - containerPort: 8080
       - name: mysql
         image: k8s/mysql
         imagePullPolicy: IfNotPresent
