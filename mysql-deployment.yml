@@ -1,29 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wordpress
+  name: mysql
+  labels:
+    app: wordpress
 spec:
   selector:
     matchLabels:
-      app: web
+      app: wordpress
+      tier: mysql
   replicas: 2
   template:
     metadata:
       labels:
         app: wordpress
+        tier: mysql
     spec:
       containers:
-      - name: wordpress
-        image: k8s/wordpress
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 80
-      - name: phpmyadmin
-        image: k8s/phpmyadmin
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 8080
-      - name: mysql
+      - name: wordpress-mysql
         image: k8s/mysql
         imagePullPolicy: IfNotPresent
         ports:
@@ -31,42 +25,46 @@ spec:
         env:
           - name: MYSQL_ROOT_PASSWORD
             value: root
+          - name: MYSQL_DATABASE
+            value: wordpress
+          - name: MYSQL_USER
+            value: wordpress
+          - name: MYSQL_PASSWORD
+            value: wordpress
         volumeMounts:
-        - name: claim-volume
-          mountPath: /volume
+        - name: mysql-claim-volume
+          mountPath: /var/lib/mysql
       volumes:
-      - name: claim-volume
+      - name: mysql-claim-volume
         persistentVolumeClaim:
-          claimName: pv-hostpath-claim
+          claimName: pv-mysql-claim
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: wordpress
+  name: mysql
   labels:
     app: wordpress
 spec:
-  type: NodePort
   ports:
-  - port: 8080
-    targetPort: 80
-    nodePort: 30000
-    protocol: TCP
+    - port: 3306
   selector:
     app: wordpress
+    tier: mysql
+  clusterIP: None
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv
+  name: pv-mysql
 spec:
   capacity:
-    storage: 1Gi
+    storage: 5Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: apache-storage
+  storageClassName: mysql-storage
   hostPath:
     path: /private/var/lib/kubernetes/pv00
     type: DirectoryOrCreate
@@ -74,12 +72,12 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pv-hostpath-claim
+  name: pv-mysql-claim
 spec:
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 1Gi
-  storageClassName: apache-storage
+      storage: 5Gi
+  storageClassName: mysql-storage
