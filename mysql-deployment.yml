@@ -23,21 +23,35 @@ spec:
         ports:
         - containerPort: 3306
         env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: root
-          - name: MYSQL_DATABASE
-            value: wordpress
           - name: MYSQL_USER
             value: wordpress
           - name: MYSQL_PASSWORD
             value: wordpress
+          - name: MYSQL_ROOT_PASSWORD
+            value: password
         volumeMounts:
         - name: mysql-claim-volume
           mountPath: /var/lib/mysql
+        - name: sql-setup-config
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mymycnf-setup-config
+          mountPath: /etc/my.cnf.d
       volumes:
       - name: mysql-claim-volume
         persistentVolumeClaim:
           claimName: pv-mysql-claim
+      - name: sql-setup-config
+        configMap:
+              name: db-setup-configmap
+              items:
+                - key: setup.sql
+                  path: setup.sql
+      - name: mymycnf-setup-config
+        configMap:
+              name: mymycnf-setup-configmap
+              items:
+                - key: mymy.cnf
+                  path: mymy.cnf               
 ---
 apiVersion: v1
 kind: Service
@@ -51,7 +65,7 @@ spec:
   selector:
     app: wordpress
     tier: mysql
-  clusterIP: None
+  type: ClusterIP
 ---
 apiVersion: v1
 kind: PersistentVolume
