@@ -2,19 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  labels:
-    app: wordpress
 spec:
   selector:
     matchLabels:
-      app: wordpress
-      tier: mysql
+      app: mysql
   replicas: 2
   template:
     metadata:
       labels:
-        app: wordpress
-        tier: mysql
+        app: mysql
     spec:
       containers:
       - name: wordpress-mysql
@@ -22,13 +18,10 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3306
+          name: mysql
         env:
-          - name: MYSQL_USER
-            value: wordpress
-          - name: MYSQL_PASSWORD
-            value: wordpress
-          - name: MYSQL_ROOT_PASSWORD
-            value: password
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
         volumeMounts:
         - name: mysql-claim-volume
           mountPath: /var/lib/mysql
@@ -58,13 +51,12 @@ kind: Service
 metadata:
   name: mysql
   labels:
-    app: wordpress
+    app: mysql
 spec:
   ports:
     - port: 3306
   selector:
-    app: wordpress
-    tier: mysql
+    app: mysql
   type: ClusterIP
 ---
 apiVersion: v1
