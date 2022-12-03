@@ -33,6 +33,7 @@ spec:
           resources:
           env:
             - name: MYSQL_ROOT_PASSWORD
+              #value: root
               valueFrom:
                   secretKeyRef:
                     name: mysql-pass

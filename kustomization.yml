@@ -3,3 +3,4 @@ resources:
   - mysql-configmap.yml
   - mysql-deployment.yml
   - wordpress-deployment.yml
+  - phpmyadmin-deployment.yml
