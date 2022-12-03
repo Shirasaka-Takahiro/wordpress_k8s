@@ -1,63 +1,59 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mysql
-spec:
-  selector:
-    matchLabels:
-      app: mysql
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: mysql
-    spec:
-      containers:
-      - name: wordpress-mysql
-        image: k8s/mysql
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 3306
-          name: mysql
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: password
-        volumeMounts:
-        - name: mysql-claim-volume
-          mountPath: /var/lib/mysql
-        - name: sql-setup-config
-          mountPath: /docker-entrypoint-initdb.d
-        - name: mymycnf-setup-config
-          mountPath: /etc/my.cnf.d
-      volumes:
-      - name: mysql-claim-volume
-        persistentVolumeClaim:
-          claimName: pv-mysql-claim
-      - name: sql-setup-config
-        configMap:
-              name: db-setup-configmap
-              items:
-                - key: setup.sql
-                  path: setup.sql
-      - name: mymycnf-setup-config
-        configMap:
-              name: mymycnf-setup-configmap
-              items:
-                - key: mymy.cnf
-                  path: mymy.cnf               
----
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
-  labels:
-    app: mysql
+  name: mysql-server
 spec:
-  ports:
-    - port: 3306
-  selector:
-    app: mysql
   type: ClusterIP
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+      protocol: TCP
+  selector:
+    app: mysql-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-server
+spec:
+  selector:
+    matchLabels:
+      app: mysql-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-server
+    spec:
+      containers:
+        - image: mysql:8.0
+          name: mysql
+          resources:
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: mysql-claim-volume
+              mountPath: /var/lib/mysql
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - name: mysql-conf
+              mountPath: /etc/mysql/conf.d
+      volumes:
+        - name: mysql-claim-volume
+          persistentVolumeClaim:
+            claimName: pv-mysql-claim
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
+        - name: mysql-conf
+          configMap:
+            name: mysql-conf-config
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -87,3 +83,31 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: mysql-storage
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+data:
+  createdb.sql: |
+    CREATE DATABASE wordpress;
+    CREATE USER 'wordpress'@'%' IDENTIFIED WITH mysql_native_password BY 'wordpress';
+    GRANT ALL PRIVILEGES ON *.* TO 'wordpress'@'%';
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-conf-config
+data:
+  custom.cnf: |
+    [mysqld]
+    server-id=101
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_unicode_ci
+    explicit-defaults-for-timestamp=1
+    general-log=1
+    general-log-file=/var/log/mysql/mysqld.log
+    default_authentication_plugin=mysql_native_password
+
+    [client]
+    default-character-set=utf8mb4
