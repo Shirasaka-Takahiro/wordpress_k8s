@@ -1,4 +1,4 @@
-# How to build up and use
+# How to build up
 1. cd ./phpmyadmin && docker image build -t k8s/phpmyadmin .
 2. cd ..
 3. cd ./wordpress && docker image build -t k8s/wordpress .
