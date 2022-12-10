@@ -6,7 +6,8 @@ spec:
   selector:
     matchLabels:
       app: mysql-server
-  replicas: 2
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
