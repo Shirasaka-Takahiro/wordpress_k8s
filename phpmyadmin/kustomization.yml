@@ -1,0 +1,3 @@
+resources:
+  - phpmyadmin-service.yml
+  - phpmyadmin-deployment.yml

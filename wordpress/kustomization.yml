@@ -1,0 +1,3 @@
+resources:
+  - wordpress-service.yml
+  - wordpress-deployment.yml

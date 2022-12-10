@@ -1,17 +1,3 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-server
-spec:
-  type: ClusterIP
-  ports:
-    - name: mysql
-      port: 3306
-      targetPort: 3306
-      protocol: TCP
-  selector:
-    app: mysql-server
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,32 +44,3 @@ spec:
         - name: mysql-conf
           configMap:
             name: mysql-conf-config
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-mysql
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
-  storageClassName: mysql-storage
-  hostPath:
-    path: /private/var/lib/kubernetes/pv00
-    type: DirectoryOrCreate
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pv-mysql-claim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  volumeMode: Filesystem
-  resources:
-    requests:
-      storage: 5Gi
-  storageClassName: mysql-storage

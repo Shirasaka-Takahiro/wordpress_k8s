@@ -2,5 +2,6 @@ resources:
   - secret.yml
   - mysql-configmap.yml
   - mysql-deployment.yml
-  - wordpress-deployment.yml
-  - phpmyadmin-deployment.yml
+  - mysql-pv.yml
+  - mysql-pvc.yml
+  - mysql-service.yml
